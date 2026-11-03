@@ -340,7 +340,7 @@ button:disabled{opacity:.65;cursor:default}
     <button id="wToday" type="button" class="ghost" hidden>กลับไปสัปดาห์นี้</button>
     <div id="tnote" style="--i:1"></div>
     <div class="tgrid glass" id="tgrid" style="--i:2"></div>
-    <div id="tmisc"></div>
+    <div id="tmisc"></div><button id="impBtn" type="button" class="ghost">เพิ่มรูปที่ปั๊มแล้ว</button>button><input id="impFiles" type="file" accept="image/*" multiple hidden>
     <div id="tdetail"></div>
   </section>
 </div>
@@ -943,6 +943,7 @@ setView((location.hash||"").slice(1),true);
 Store.init().then(()=>{photos.forEach(saveUI);if(Store.ok)startSub();renderTable()});
 // first paint does not wait for the font; photos re-stamp once it arrives
 if(document.fonts)Promise.all(["400","600","700"].map(w=>document.fonts.load(`${w} 40px "IBM Plex Sans Thai"`,"คาบที่ ม. ห้อง 0123456789"))).then(renderAll,()=>{});
+(()=>{const b=$("impBtn"),f=$("impFiles"),dlg=document.createElement("dialog");dlg.className="lg";document.body.appendChild(dlg);const q=s=>dlg.querySelector(s);const lbl=v=>{const d=new Date(v);if(isNaN(d))return"ใส่วันเวลาให้ถูกต้อง";const r=resolve({date:d,sel:"auto"});return r.pi<0?"ไม่ตรงคาบเรียน":"คาบที่ "+(r.pi+1)+(r.entry?" · "+lab(r.entry):"")};b.onclick=()=>{if(Store.ok)f.click();else if(Store.state==="free")openLogin()};f.onchange=()=>{const fs=[...f.files];f.value="";if(!fs.length)return;dlg.innerHTML='<h2>เพิ่มรูปที่ปั๊มแล้ว</h2><p class="muted">ใส่วันและเวลาตามที่ปั๊มไว้บนรูป ระบบจะจัดเข้าคาบให้</p>'+fs.map((x,i)=>{const v=dtLocal(new Date(x.lastModified));return'<div style="display:flex;gap:10px;align-items:center;margin:10px 0"><img src="'+URL.createObjectURL(x)+'" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:8px"><div style="flex:1;min-width:0"><input type="datetime-local" data-i="'+i+'" value="'+v+'" style="width:100%"><small data-l="'+i+'">'+lbl(v)+'</small></div></div>'}).join("")+'<div class="btns"><button type="button" class="pri" id="impOk">บันทึกลงตาราง</button></div><div id="impMsg" class="note" hidden><span></span></div><button type="button" class="ghost" id="impX">ยกเลิก</button>';dlg.querySelectorAll("input").forEach(el=>{el.oninput=()=>{q('[data-l="'+el.dataset.i+'"]').textContent=lbl(el.value)}});q("#impX").onclick=()=>dlg.close();q("#impOk").onclick=async ev=>{const ok=ev.currentTarget,m=q("#impMsg");ok.disabled=true;let n=0;try{for(let i=0;i<fs.length;i++){const d=new Date(q('input[data-i="'+i+'"]').value);if(isNaN(d))throw{code:"bad"};const r=resolve({date:d,sel:"auto"}),en=r.entry,full=fs[i],th=await thumbOf(full),im=new Image();im.src=URL.createObjectURL(full);await im.decode();await Store.save({ts:d.getTime(),day:dayKey(d),pi:r.pi,code:en?en.code:"",cls:en?en.cls:"",room:en?en.room:"",w:im.naturalWidth,h:im.naturalHeight},full,th,null);n++}dlg.close()}catch(err){m.hidden=false;m.firstElementChild.textContent=err&&err.code==="bad"?"วันเวลาไม่ถูกต้อง":errText(err)+(n?" (บันทึกแล้ว "+n+" รูป)":"");ok.disabled=false}};dlg.showModal()}})();
 </script>
 
 </body>

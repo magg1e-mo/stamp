@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>STAMP</title>
+<meta name="apple-mobile-web-app-title" content="STAMP">
+<meta name="application-name" content="STAMP">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fff6f9">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap">
+<style>
+/* Layout: one phone-width column over a soft pink-white field. Frosted dock (sticky upload), glass settings panels, translucent photo cards with the stamped result first. */
+:root{
+  --bg:#fff6f9; --orb1:#ffc4d8; --orb2:#ffdce8; --orb3:#ffcfe0;
+  --glass:rgba(255,255,255,.58); --glass-strong:rgba(255,255,255,.8); --glass-line:rgba(255,255,255,.9); --hl:rgba(255,255,255,.95);
+  --edge:rgba(176,52,106,.18); --field:rgba(255,255,255,.85); --track:rgba(120,70,90,.28);
+  --fg:#2b1822; --muted:#7b6270;
+  --accent:#c8256a; --accent-hi:#e04a85; --accent-ink:#a81b57; --accent-fg:#ffffff; --accent-soft:rgba(200,37,106,.10);
+  --warn:#8f4a05; --warn-bg:#fff0dc;
+  --shadow:rgba(150,30,80,.2); --band:rgba(255,246,249,.72); --scroll:rgba(200,37,106,.35);
+  --tag-bg:#ffd5e4; --tag-fg:#8a1247;
+  --ui:"IBM Plex Sans Thai",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#170e13; --orb1:#5e1f3e; --orb2:#3b1328; --orb3:#4a1832;
+  --glass:rgba(255,255,255,.07); --glass-strong:rgba(255,255,255,.12); --glass-line:rgba(255,255,255,.14); --hl:rgba(255,255,255,.16);
+  --edge:rgba(255,150,190,.2); --field:rgba(255,255,255,.07); --track:rgba(255,255,255,.24);
+  --fg:#f7e9ef; --muted:#c3a8b5;
+  --accent:#ff6fa3; --accent-hi:#ff8ab5; --accent-ink:#ff9cc0; --accent-fg:#2a0b18; --accent-soft:rgba(255,111,163,.14);
+  --warn:#f2b46c; --warn-bg:rgba(242,180,108,.14);
+  --shadow:rgba(0,0,0,.5); --band:rgba(23,14,19,.7); --scroll:rgba(255,111,163,.4);
+  --tag-bg:rgba(255,111,163,.22); --tag-fg:#ffc2d8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#170e13; --orb1:#5e1f3e; --orb2:#3b1328; --orb3:#4a1832;
+  --glass:rgba(255,255,255,.07); --glass-strong:rgba(255,255,255,.12); --glass-line:rgba(255,255,255,.14); --hl:rgba(255,255,255,.16);
+  --edge:rgba(255,150,190,.2); --field:rgba(255,255,255,.07); --track:rgba(255,255,255,.24);
+  --fg:#f7e9ef; --muted:#c3a8b5;
+  --accent:#ff6fa3; --accent-hi:#ff8ab5; --accent-ink:#ff9cc0; --accent-fg:#2a0b18; --accent-soft:rgba(255,111,163,.14);
+  --warn:#f2b46c; --warn-bg:rgba(242,180,108,.14);
+  --shadow:rgba(0,0,0,.5); --band:rgba(23,14,19,.7); --scroll:rgba(255,111,163,.4);
+  --tag-bg:rgba(255,111,163,.22); --tag-fg:#ffc2d8; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scrollbar-width:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;interpolate-size:allow-keywords}
+::-webkit-scrollbar{display:none;width:0;height:0}
+*{touch-action:pan-x pan-y;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:15px;line-height:1.6;caret-color:var(--accent)}
+::selection{background:var(--accent);color:var(--accent-fg)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;contain:strict;transform:translateZ(0);
+  background:
+   radial-gradient(60vmax 50vmax at 88% -6%,var(--orb1),transparent 62%),
+   radial-gradient(52vmax 46vmax at -12% 38%,var(--orb2),transparent 64%),
+   radial-gradient(56vmax 46vmax at 92% 96%,var(--orb3),transparent 62%)}
+.wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding-block:20px calc(32px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+
+.ic{width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.glass{background:var(--glass);border:1px solid var(--glass-line);
+  box-shadow:inset 0 1px 0 var(--hl),0 1px 2px var(--shadow),0 16px 36px -18px var(--shadow)}
+.blur{-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%)}
+
+.head{display:flex;gap:14px;align-items:center}
+.mark{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;color:var(--accent);flex:none;font-size:1.35rem}
+h1{font-size:1.5rem;font-weight:700;margin:0;line-height:1.25;text-wrap:balance;letter-spacing:.1em}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.9rem;line-height:1.5}
+
+.upload{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding-block:8px}
+.dock{border-radius:28px;padding:6px}
+.more{display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;border-radius:22px;font-weight:600;color:var(--accent-ink);cursor:pointer;-webkit-user-select:none;user-select:none;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.more:active{transform:scale(.985)}
+.cta{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--accent-fg);font-weight:600;font-size:1.05rem;border-radius:18px;padding:15px;cursor:pointer;
+  background:linear-gradient(180deg,var(--accent-hi),var(--accent));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 8px 18px -8px var(--accent);
+  transition:transform .3s cubic-bezier(.16,1,.3,1),filter .3s}
+.cta small{font-weight:400;font-size:.82rem;opacity:.85}
+.cta:active{transform:scale(.985)}
+.cta:focus-within{outline:2px solid var(--accent);outline-offset:3px}
+.cta input{position:absolute;opacity:0;width:1px;height:1px}
+@media (hover:hover){.cta:hover{filter:brightness(1.06)}}
+
+.chk{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 18px;border-radius:20px;font-weight:400;cursor:pointer}
+.chk input{appearance:none;-webkit-appearance:none;margin:0;border:0;width:46px;height:28px;border-radius:999px;background:var(--track);position:relative;flex:none;cursor:pointer;transition:background .3s}
+.chk input::before{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(60,10,30,.35);transition:transform .35s cubic-bezier(.16,1,.3,1)}
+.chk input:checked{background:var(--accent)}
+.chk input:checked::before{transform:translateX(18px)}
+.chk input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+details{border-radius:20px}
+summary{padding:14px 18px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;list-style:none;border-radius:20px}
+summary::-webkit-details-marker{display:none}
+summary span{margin-left:auto;color:var(--muted);font-weight:400;font-size:.86rem;text-align:right}
+summary .chev{color:var(--muted);transition:transform .35s cubic-bezier(.16,1,.3,1)}
+details[open] summary .chev{transform:rotate(180deg)}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.panel{padding:2px 18px 18px;display:flex;flex-direction:column;gap:12px}
+
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label,.lbl{font-size:.82rem;color:var(--muted);letter-spacing:.02em}
+input[type=text],input[type=time],input[type=datetime-local],select{font:inherit;font-size:16px;color:var(--fg);background:var(--field);border:1px solid var(--edge);border-radius:13px;padding:11px 13px;width:100%;min-width:0;transition:border-color .2s,box-shadow .2s}
+input::placeholder{color:var(--muted);opacity:.8}
+input[type=text]{min-height:48px}
+input[type=time],input[type=datetime-local]{-webkit-appearance:none;appearance:none;display:block;min-height:48px;text-align:left}
+input::-webkit-date-and-time-value{text-align:left}
+input[type=time]{padding-inline:10px}
+input[type=time]::-webkit-calendar-picker-indicator{display:none}
+select{-webkit-appearance:none;appearance:none;min-height:48px;padding-right:38px;background-color:var(--field);
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 21px) 52%,calc(100% - 15px) 52%;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+input:focus-visible,select:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.prow{display:grid;grid-template-columns:4.2em 1fr 1fr 2.6em;gap:8px;align-items:center}
+.prow b{font-weight:600;font-size:.9rem}
+.periods{display:flex;flex-direction:column;gap:8px}
+
+button{font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;color:var(--fg);background:var(--glass-strong);border:1px solid var(--edge);border-radius:13px;padding:10px 14px;min-height:44px;-webkit-user-select:none;user-select:none;transition:transform .3s cubic-bezier(.16,1,.3,1),background .2s}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.pri{color:var(--accent-fg);border-color:transparent;font-weight:600;background:linear-gradient(180deg,var(--accent-hi),var(--accent));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 14px -7px var(--accent)}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted);padding:6px 8px}
+.x{padding:8px 0;color:var(--muted)}
+@media (hover:hover){button:hover{background:var(--accent-soft)}button.pri:hover{background:linear-gradient(180deg,var(--accent-hi),var(--accent));filter:brightness(1.06)}}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+
+.dayg{border-top:1px solid var(--edge);padding-top:8px}
+.dayh{font-weight:600;font-size:.9rem;margin-bottom:2px}
+.erow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem;padding:2px 0}
+.erow span{min-width:0;overflow-wrap:anywhere}
+.erow button{padding:5px 8px;color:var(--muted);background:transparent;border-color:transparent}
+.muted{color:var(--muted);font-size:.86rem}
+.addgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.hint{font-size:.84rem;color:var(--muted);text-align:center;margin:0}
+.cards{display:flex;flex-direction:column;gap:16px}
+.card{border-radius:26px;padding:8px;overflow:hidden;content-visibility:auto;contain-intrinsic-size:auto 640px;scroll-margin-top:calc(env(safe-area-inset-top,0px) + 16px)}
+.shot{position:relative;border-radius:19px;overflow:hidden;background:var(--accent-soft);aspect-ratio:4/3}
+.shot img.out{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease-out;-webkit-touch-callout:default}
+.shot.ready img.out{opacity:1}
+.shim{position:relative;overflow:hidden}
+.shim::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,var(--glass-strong) 50%,transparent 70%);transform:translateX(-100%)}
+.shot.ready.shim::after{content:none}
+.sk{height:16px;border-radius:8px;background:var(--accent-soft)}
+.ctl{padding:12px 8px 8px;display:flex;flex-direction:column;gap:12px}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px}
+.stat{display:flex;flex-direction:column;gap:8px}
+.note{display:flex;gap:9px;align-items:flex-start;font-size:.9rem;padding:10px 13px;border-radius:14px;background:var(--glass-strong);border:1px solid var(--edge)}
+.note .ic{margin-top:.2em}
+.note.ok{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
+.note.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.ask{background:var(--accent-soft);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.btns{display:flex;gap:8px}
+.btns button{flex:1}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;background:var(--tag-bg);color:var(--tag-fg);border-radius:999px;padding:3px 11px;letter-spacing:.03em}
+
+.view{display:flex;flex-direction:column;gap:14px}
+input[type=email],input[type=password]{font:inherit;font-size:16px;color:var(--fg);background:var(--field);border:1px solid var(--edge);border-radius:13px;padding:11px 13px;width:100%;min-height:48px;min-width:0}
+input[type=email]:focus-visible,input[type=password]:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+dialog.lg{border:1px solid var(--glass-line);border-radius:26px;padding:20px;width:min(92vw,380px);color:var(--fg);background:var(--bg);box-shadow:0 24px 60px -12px var(--shadow);margin:auto}
+dialog.lg[open]{display:flex;flex-direction:column;gap:12px;animation:rise .45s cubic-bezier(.16,1,.3,1)}
+dialog.lg::backdrop{background:rgba(40,10,25,.38)}
+dialog.lg h2{margin:0;font-size:1.2rem}
+dialog.lg p{margin:0}
+.lgf{display:flex;flex-direction:column;gap:10px}
+.authbar{text-align:center;margin:4px 0 0;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap}
+.authbar:empty{display:none}
+.view[hidden]{display:none}
+[hidden]{display:none!important}
+.seg{display:grid;grid-template-columns:1fr 1fr;position:relative;padding:4px;border-radius:22px}
+.seg-ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:18px;background:linear-gradient(180deg,var(--accent-hi),var(--accent));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 14px -7px var(--accent);transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.seg[data-v="table"] .seg-ind{transform:translateX(100%)}
+.seg button{position:relative;z-index:1;background:transparent;border:0;font-weight:600;color:var(--muted);transition:color .3s}
+.seg button[aria-selected="true"]{color:var(--accent-fg)}
+.seg button small{font-weight:600;opacity:.85;margin-left:6px}
+@media (hover:hover){.seg button:hover{background:transparent}}
+button:disabled{opacity:.65;cursor:default}
+.spin{width:1em;height:1em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex:none}
+.savebar{display:flex;flex-direction:column;gap:8px}
+.savebar:empty{display:none}
+.weekbar{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;border-radius:22px;padding:6px}
+.weekbar button{background:transparent;border:0;padding:0;color:var(--accent-ink);min-width:52px;font-size:1.2rem}
+.wlabel{display:flex;flex-direction:column;align-items:center;line-height:1.35;text-align:center}
+.wlabel b{font-size:1.05rem}
+.wlabel span{font-size:.84rem;color:var(--muted)}
+#wToday{align-self:center}
+.tgrid{border-radius:26px;padding:10px 8px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;touch-action:pan-x pan-y}
+.tgrid::-webkit-scrollbar{display:none}
+.tg{display:grid;gap:0;align-items:stretch;width:max-content;--line:rgba(128,128,128,.2);border:1px solid var(--line);border-radius:22px;clip-path:inset(0 round 22px)}
+.tg>*{border-right:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important;border-radius:0!important}
+.tg>.lc{border-right:0!important}
+.tg>.lr{border-bottom:0!important}
+.th{font-size:.76rem;color:var(--muted);text-align:center;padding:5px 0;line-height:1.25}
+.th.dh{position:sticky;left:0;z-index:3;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:5px 0 7px -5px var(--shadow)}
+.th.ph{display:flex;flex-direction:column;align-items:center;gap:1px}
+.th b{display:block;font-size:1rem;color:var(--fg)}
+.th.today{background:var(--accent-soft);color:var(--accent-ink)}
+.th.today b{color:var(--accent-ink)}
+.th.dh.today{background:linear-gradient(var(--accent-soft),var(--accent-soft)),var(--bg)}
+.rh{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.68rem;color:var(--muted);line-height:1.2}
+.rh b{font-size:.95rem;color:var(--fg)}
+.cell{position:relative;min-height:76px;min-width:0;border-radius:13px;overflow:hidden;padding:0;border:1px solid var(--edge);background:var(--field);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:.7rem;color:var(--muted);line-height:1.25;text-align:center}
+.cell.empty{background:transparent;border-color:transparent}
+.cell.sched b{color:var(--fg);font-size:.82rem}
+.cell.sched span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.cell.has{cursor:pointer}
+.cell.has img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cell.has::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(0,0,0,.62))}
+.cell .lb{position:absolute;left:0;right:0;bottom:4px;z-index:1;color:#fff;font-weight:600;font-size:.72rem;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.cell .bd{position:absolute;top:4px;right:4px;z-index:1;min-width:19px;height:19px;border-radius:10px;background:var(--accent);color:var(--accent-fg);font-size:.68rem;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.cell.on{outline:3px solid var(--accent);outline-offset:-3px;z-index:1}
+.misc{border-radius:22px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.misc .lbl{margin:0}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.mt{position:relative;aspect-ratio:1;padding:0;border-radius:13px;overflow:hidden;border:1px solid var(--edge);min-height:0}
+.mt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mt.on{outline:3px solid var(--accent);outline-offset:1px}
+.detail{border-radius:26px;padding:14px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:12px}
+.dhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.dhead h2{font-size:1rem;margin:0;line-height:1.45}
+.dhead p{margin:0;color:var(--muted);font-size:.88rem}
+.pitem{display:flex;flex-direction:column;gap:8px}
+.pitem img{display:block;width:100%;height:auto;border-radius:18px;background:var(--accent-soft);-webkit-touch-callout:default}
+.pmeta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)}
+.pmeta .btns{flex:none}
+.pmeta .btns button{flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rise{from{transform:translateY(14px)}}
+@keyframes pop{from{transform:translateY(6px) scale(.97)}}
+@keyframes shimmer{to{transform:translateX(100%)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes settle{from{transform:scale(1.025);filter:blur(10px)}}
+@keyframes flash{from{opacity:.55}}
+@media (prefers-reduced-motion:no-preference){
+  .wrap>.head,.wrap>.seg,.view>:not(.cards){animation:rise .8s cubic-bezier(.16,1,.3,1) backwards;animation-delay:calc(var(--i,0)*70ms)}
+  .tgrid.swap{animation:rise .5s cubic-bezier(.16,1,.3,1)}
+  .detail.fresh{animation:rise .55s cubic-bezier(.16,1,.3,1) backwards}
+  .card{animation:rise .6s cubic-bezier(.16,1,.3,1) backwards}
+  .stat>*{animation:pop .45s cubic-bezier(.16,1,.3,1) backwards}
+  .note.ok .ic path{stroke-dasharray:24;stroke-dashoffset:24;animation:draw .5s .12s cubic-bezier(.16,1,.3,1) forwards}
+  .shim::after{animation:shimmer 1.4s ease-in-out infinite}
+  .shot img.out.swap{animation:settle .6s cubic-bezier(.16,1,.3,1)}
+  .shot img.out.flash{animation:flash .35s ease-out}
+  details[open] .panel{animation:rise .5s cubic-bezier(.16,1,.3,1) backwards}
+  details::details-content{block-size:0;overflow:clip;transition:block-size .45s cubic-bezier(.16,1,.3,1),content-visibility .45s allow-discrete}
+  details[open]::details-content{block-size:auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l.8 12h8.4L17 7"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2l1.1-1.6A1 1 0 0 1 9.6 4h4.8a1 1 0 0 1 .8.4L16.3 6h1.2A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.2"/></symbol>
+  </defs>
+</svg>
+<div class="bg" aria-hidden="true"></div>
+
+<div class="wrap">
+  <header class="head" style="--i:0">
+    <div class="mark glass"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></div>
+    <div>
+      <h1>STAMP</h1>
+      <p class="sub">เลือกรูป แอปอ่านเวลาถ่าย แล้วจับคู่คาบ วิชา และห้องจากตารางสอนให้เอง</p>
+    </div>
+  </header>
+
+  <nav class="seg glass" data-v="stamp" role="tablist" aria-label="เลือกหน้า" style="--i:1">
+    <span class="seg-ind" aria-hidden="true"></span>
+    <button type="button" role="tab" id="tab-stamp" data-v="stamp" aria-selected="true">ปั๊มรูป</button>
+    <button type="button" role="tab" id="tab-table" data-v="table" aria-selected="false">ตารางสรุป<small id="cnt"></small></button>
+  </nav>
+
+  <section class="view" id="v-stamp">
+  <div class="upload" style="--i:1">
+    <div class="dock glass blur">
+      <label for="files" class="cta"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>เลือกรูป <small>เลือกได้หลายรูป</small><input id="files" type="file" accept="image/*" multiple></label>
+    </div>
+  </div>
+
+  <label class="chk glass" style="--i:2" for="askBox"><span>ถามยืนยันคาบทุกรูปก่อน</span><input id="askBox" type="checkbox" role="switch"></label>
+
+  <details class="glass" style="--i:3">
+    <summary>ข้อมูลบนลายน้ำ <span id="infoSum"></span><svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+    <div class="panel">
+      <div class="field"><label for="school">โรงเรียน</label><input id="school" type="text"></div>
+      <div class="field"><label for="who">ชื่อผู้สังเกต</label><input id="who" type="text"></div>
+      <div class="field"><label for="teacher">ครูผู้สอน (ไม่ใส่ก็ได้)</label><input id="teacher" type="text"></div>
+      <label class="chk" for="showRange" style="padding:4px 0"><span>แสดงช่วงเวลาคาบใต้ป้ายเหลือง</span><input id="showRange" type="checkbox" role="switch"></label>
+    </div>
+  </details>
+
+  <details class="glass" style="--i:4">
+    <summary>ตารางสอน <span id="schedSum"></span><svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+    <div class="panel">
+      <div id="sched" class="panel" style="padding:0"></div>
+      <div class="lbl">เพิ่มคาบ (ถ้ามีเฉพาะกิจกรรม ให้ใส่ชื่อกิจกรรมในช่องรหัส แล้วเว้นชั้น/ห้อง)</div>
+      <div class="addgrid">
+        <div class="field"><label for="nd">วัน</label><select id="nd"></select></div>
+        <div class="field"><label for="np">คาบ</label><select id="np"></select></div>
+        <div class="field"><label for="nc">รหัสวิชา</label><input id="nc" type="text" placeholder="อ22102"></div>
+        <div class="field"><label for="ncl">ชั้น</label><input id="ncl" type="text" placeholder="2/9"></div>
+        <div class="field"><label for="nr">ห้อง</label><input id="nr" type="text" placeholder="225"></div>
+        <div class="field"><label>&nbsp;</label><button id="addS" type="button" class="pri"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มคาบ</button></div>
+      </div>
+      <div class="btnrow"><button id="resetS" type="button">คืนตารางเริ่มต้น</button></div>
+    </div>
+  </details>
+
+  <details class="glass" style="--i:5">
+    <summary>เวลาคาบ <span id="perSum"></span><svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+    <div class="panel">
+      <div class="periods" id="periods"></div>
+      <div class="btnrow"><button id="addP" type="button"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>เพิ่มคาบ</button><button id="resetP" type="button">คืนค่าเริ่มต้น</button></div>
+    </div>
+  </details>
+
+  <p class="hint" style="--i:6">กดค้างที่รูปที่ปั๊มแล้ว แล้วเลือก “บันทึกไปยังรูปภาพ”</p>
+  <div class="cards" id="cards"></div>
+  <label for="files" class="more glass"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>เลือกรูปเพิ่ม</label>
+  </section>
+
+  <section class="view" id="v-table" hidden>
+    <div class="weekbar glass" style="--i:0">
+      <button id="wPrev" type="button" aria-label="สัปดาห์ก่อนหน้า"><svg class="ic" aria-hidden="true"><use href="#i-left"/></svg></button>
+      <div class="wlabel"><b id="wRange"></b><span id="wStat"></span></div>
+      <button id="wNext" type="button" aria-label="สัปดาห์ถัดไป"><svg class="ic" aria-hidden="true"><use href="#i-right"/></svg></button>
+    </div>
+    <button id="wToday" type="button" class="ghost" hidden>กลับไปสัปดาห์นี้</button>
+    <div id="tnote" style="--i:1"></div>
+    <div class="tgrid glass" id="tgrid" style="--i:2"></div>
+    <div id="tmisc"></div>
+    <div id="tdetail"></div>
+  </section>
+</div>
+
+<dialog id="login" class="lg" aria-labelledby="lgTitle">
+  <h2 id="lgTitle">ตั้งค่าเครื่องนี้</h2>
+  <p class="muted">เว็บนี้ใช้คนเดียว ไม่ต้องล็อกอิน แต่รูปในตารางจะผูกกับเครื่องแรกที่กดปุ่มนี้ คนอื่นเปิดเว็บได้ แต่ดูรูปไม่ได้ กดครั้งเดียวจากแอปที่เพิ่มไว้ในหน้าจอโฮม (ไม่ใช่จากแท็บ Safari)</p>
+  <div class="btns"><button type="button" class="pri" id="lgOk">ตั้งเป็นเครื่องของฉัน</button></div>
+  <div id="lgMsg" class="note" hidden><span></span></div>
+  <button type="button" class="ghost" id="lgX">ไว้ก่อน</button>
+</dialog>
+<script>
+const TH_DAYS=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
+const TH_MON=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+// เวลาคาบ โรงเรียนภูเขียว ภาคเรียนที่ 2/2569
+const DEF_P=[["08:30","09:25"],["09:25","10:20"],["10:20","11:15"],["11:15","12:10"],["12:10","13:05"],["13:05","14:00"],["14:00","14:55"],["14:55","15:50"],["15:50","16:45"]];
+// ตารางสอน 0821 ครูฐิติภา เหล่าเสนา (ไม่รวมคาบที่ขีดฆ่า) d: 1=จันทร์ ... 5=ศุกร์
+const S=(d,p,code,cls,room)=>({d,p,code,cls,room});
+const DEF_S=[
+  S(1,2,"อ22102","2/2","SCI203"),S(1,3,"อ22102","2/9","213"),S(1,5,"อ22102","2/10","225"),S(1,7,"อ31102","4/9","225"),
+  S(2,2,"อ22102","2/2","225"),S(2,3,"อ31102","4/9","225"),S(2,5,"อ22102","2/10","225"),S(2,6,"อ22102","2/3","225"),
+  S(3,5,"อ22102","2/10","225"),S(3,8,"กิจกรรม ลส.นน.ยว.บพ.รด.","",""),
+  S(4,3,"อ22102","2/9","225"),S(4,6,"อ22102","2/3","613"),S(4,8,"กิจกรรมชุมนุมวิชาการ","",""),
+  S(5,1,"อ22102","2/2","SCI203"),S(5,5,"อ22102","2/9","225"),S(5,7,"อ22102","2/3","613")
+];
+const DEF_INFO={school:"โรงเรียนภูเขียว",who:"นายจิตติพัฒน์ ทักษะวิเรขะพันธ์",teacher:"นางสาวฐิติภา เหล่าเสนา",showRange:true};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ic=n=>`<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let periods=load("wm2_periods",DEF_P.map(x=>x.slice()));
+let schedule=load("wm2_sched",DEF_S.map(x=>({...x})));
+let info={...DEF_INFO,...load("wm2_info",{})};
+let askOn=load("wm2_ask",true);
+if(!Array.isArray(periods)||!periods.length)periods=DEF_P.map(x=>x.slice());
+if(!Array.isArray(schedule))schedule=DEF_S.map(x=>({...x}));
+// no pinch / double-tap zoom (iOS ignores user-scalable, so block the gesture events too)
+["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener("touchmove",e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+document.addEventListener("wheel",e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
+const photos=[]; // {img,date,src,sel,confirmed,denied,outEl,statEl,selEl,card,isSample}
+
+const pad=n=>String(n).padStart(2,"0");
+const toMin=s=>{const[h,m]=s.split(":").map(Number);return h*60+m};
+const dot=s=>s.replace(":",".");
+const range=i=>`${dot(periods[i][0])}–${dot(periods[i][1])} น.`;
+const sortS=()=>schedule.sort((a,b)=>a.d-b.d||a.p-b.p);
+sortS();
+const lab=e=>[e.code,e.cls?"ม."+e.cls:"",e.room?"ห้อง "+e.room:""].filter(Boolean).join(" · ");
+function findPeriod(d){const m=d.getHours()*60+d.getMinutes();for(let i=0;i<periods.length;i++){if(m>=toMin(periods[i][0])&&m<toMin(periods[i][1]))return i}return -1}
+const thDate=d=>`วัน${TH_DAYS[d.getDay()]}ที่ ${d.getDate()} ${TH_MON[d.getMonth()]} ${d.getFullYear()+543}`;
+const dtLocal=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+/* ---- match photo time -> period + class ---- */
+function resolve(p){
+  const tp=findPeriod(p.date), day=p.date.getDay();
+  if(p.sel==="auto"){
+    const e=tp>=0?schedule.find(s=>s.d===day&&s.p===tp+1):null;
+    return {pi:tp,entry:e||null};
+  }
+  if(p.sel==="none") return {pi:-1,entry:null};
+  const e=schedule[+p.sel];
+  if(!e||e.p>periods.length) return {pi:tp,entry:null};
+  return {pi:e.p-1,entry:e};
+}
+
+/* ---- EXIF DateTimeOriginal ---- */
+function exifDate(buf){
+  try{
+    const v=new DataView(buf); if(v.getUint16(0)!==0xFFD8) return null;
+    let o=2;
+    while(o<v.byteLength-4){
+      const mk=v.getUint16(o); const len=v.getUint16(o+2);
+      if(mk===0xFFE1 && v.getUint32(o+4)===0x45786966){
+        const t=o+10; const le=v.getUint16(t)===0x4949;
+        const u16=q=>v.getUint16(t+q,le), u32=q=>v.getUint32(t+q,le);
+        const readTags=ifd=>{const n=u16(ifd);const r={};for(let i=0;i<n;i++){const e=ifd+2+i*12;r[u16(e)]={type:u16(e+2),cnt:u32(e+4),val:u32(e+8)}}return r};
+        const str=tg=>{if(tg.cnt<=4)return null;let s="";for(let i=0;i<tg.cnt-1;i++)s+=String.fromCharCode(v.getUint8(t+tg.val+i));return s};
+        const ifd0=readTags(u32(4)); let s=null;
+        if(ifd0[0x8769]){const ex=readTags(ifd0[0x8769].val); if(ex[0x9003]) s=str(ex[0x9003]); else if(ex[0x9004]) s=str(ex[0x9004]);}
+        if(!s && ifd0[0x0132]) s=str(ifd0[0x0132]);
+        if(!s) return null;
+        const m=s.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):?(\d{2})?/); if(!m) return null;
+        return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
+      }
+      if((mk&0xFF00)!==0xFF00) break;
+      o+=2+len;
+    }
+  }catch(e){}
+  return null;
+}
+
+/* ---- watermark drawing ---- */
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+const SCR=document.createElement("canvas"); // one shared scratch canvas; toBlob snapshots it synchronously
+function render(p){
+  const v=p.rv=(p.rv||0)+1;
+  const w=p.base.width, h=p.base.height;
+  const c=SCR; if(c.width!==w||c.height!==h){c.width=w;c.height=h}
+  const g=c.getContext("2d"); g.shadowColor="transparent"; g.shadowBlur=0; g.globalAlpha=1;
+  g.drawImage(p.base,0,0);
+  const u=Math.min(w,h)/100, F='"IBM Plex Sans Thai",sans-serif';
+  const gb=g.createLinearGradient(0,h-42*u,0,h); gb.addColorStop(0,"rgba(0,0,0,0)"); gb.addColorStop(1,"rgba(0,0,0,.74)");
+  g.fillStyle=gb; g.fillRect(0,h-42*u,w,42*u);
+  const gt=g.createLinearGradient(0,0,0,26*u); gt.addColorStop(0,"rgba(0,0,0,.58)"); gt.addColorStop(1,"rgba(0,0,0,0)");
+  g.fillStyle=gt; g.fillRect(0,0,w,26*u);
+  const d=p.date, r=resolve(p);
+  const x=4.5*u; let y=h-4.5*u;
+  g.textBaseline="alphabetic"; g.shadowColor="rgba(0,0,0,.45)"; g.shadowBlur=u*.8;
+  g.fillStyle="rgba(255,255,255,.88)"; g.font=`400 ${2.9*u}px ${F}`;
+  const foot=[info.school,info.who].filter(Boolean).join("  ·  ");
+  if(foot){g.fillText(foot,x,y,w-9*u); y-=4.2*u}
+  if(info.teacher){g.fillText("ครูผู้สอน "+info.teacher,x,y,w-9*u); y-=4.2*u}
+  y-=.3*u;
+  g.fillStyle="#fff"; g.font=`700 ${10.5*u}px ${F}`; const tStr=`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  g.fillText(tStr,x-.4*u,y); const tw=g.measureText(tStr).width; const px=x+tw+3*u;
+  g.fillStyle="rgba(255,255,255,.92)"; g.font=`600 ${3.6*u}px ${F}`; g.fillText("น.",px-1.5*u,y-.4*u);
+  // top: date, then course line, centred; period badge in the top-right corner
+  const hasP=r.pi>=0&&r.pi<periods.length, pl=`คาบที่ ${r.pi+1}`;
+  g.font=`700 ${4.2*u}px ${F}`; const pillW=hasP?g.measureText(pl).width+4*u:0;
+  const maxW=Math.max(24*u,w-2*(Math.max(pillW,16*u)+x+2*u)), cx=w/2, ty=8.6*u;
+  g.textAlign="center"; g.fillStyle="#fff"; g.shadowBlur=u*.8;
+  g.font=`600 ${3.4*u}px ${F}`; g.fillText(thDate(d),cx,ty,maxW);
+  if(r.entry){
+    const line=[r.entry.code,r.entry.cls?"ม."+r.entry.cls:"",r.entry.room?"ห้อง "+r.entry.room:""].filter(Boolean).join("  ·  ");
+    g.font=`700 ${3.9*u}px ${F}`; g.fillText(line,cx,ty+5.2*u,maxW);
+  }
+  g.textAlign="left";
+  if(hasP){
+    const bh=6.4*u, bx=w-x-pillW, by=x;
+    g.shadowBlur=0; g.fillStyle="#f2c230"; rr(g,bx,by,pillW,bh,bh/2); g.fill();
+    g.fillStyle="#1d2420"; g.font=`700 ${4.2*u}px ${F}`; g.fillText(pl,bx+2*u,by+bh*.72);
+    if(info.showRange!==false){
+      g.shadowBlur=u*.8; g.fillStyle="rgba(255,255,255,.92)"; g.font=`600 ${3*u}px ${F}`;
+      g.textAlign="right"; g.fillText(range(r.pi),w-x,by+bh+3.8*u); g.textAlign="left";
+    }
+  }
+  if(p.isSample){g.shadowBlur=0;g.fillStyle="rgba(255,255,255,.9)";g.font=`700 ${3*u}px ${F}`;g.fillText("รูปตัวอย่าง",x,6.5*u)}
+  p.blobP=new Promise(res=>c.toBlob(b=>{
+    res(b);
+    if(!b||v!==p.rv||!p.card.isConnected)return;
+    setOut(p,URL.createObjectURL(b));
+  },"image/jpeg",0.9));
+}
+function setOut(p,url){
+  const im=p.outEl, old=p.url, first=!p.shot.classList.contains("ready"); p.url=url; im.src=url;
+  const done=()=>{
+    if(old)URL.revokeObjectURL(old);
+    p.shot.classList.add("ready");
+    im.classList.remove("swap","flash"); void im.offsetWidth; im.classList.add(first?"swap":"flash");
+  };
+  (im.decode?im.decode():Promise.reject()).then(done,done);
+}
+async function renderAll(){for(const p of [...photos]){if(p.base)render(p);await tick()}}
+
+/* ---- per-photo status / confirmation ---- */
+function status(p){
+  const r=resolve(p), el=p.statEl; let h="";
+  if(p.src==="file") h+=`<div class="note warn">${ic("x")}<span>รูปนี้ไม่มีเวลาถ่ายในไฟล์ จึงใช้เวลาของไฟล์แทน โปรดตรวจวันเวลาด้านล่าง</span></div>`;
+  if(p.sel==="auto"){
+    if(r.entry){
+      const t=`คาบที่ ${r.pi+1} · ${esc(lab(r.entry))}`;
+      if(p.denied) h+=`<div class="note warn"><span>เลือกคาบที่ถูกต้องจากรายการด้านล่าง</span></div>`;
+      else if(askOn&&!p.confirmed) h+=`<div class="ask"><div>ใช่ <b>${t}</b> ไหม?</div><div class="btns"><button type="button" class="pri" data-a="yes">${ic("check")}ใช่</button><button type="button" data-a="no">ไม่ใช่</button></div></div>`;
+      else h+=`<div class="note ok">${ic("check")}<span>${t}</span></div>`;
+    }else if(r.pi>=0) h+=`<div class="note warn"><span>ช่วงเวลานี้ (คาบที่ ${r.pi+1}) ไม่มีคาบสอนในตาราง จึงยังไม่ใส่วิชา เลือกคาบจากรายการด้านล่างได้</span></div>`;
+    else h+=`<div class="note warn"><span>เวลานี้อยู่นอกเวลาเรียน จึงไม่ใส่คาบ เลือกคาบจากรายการด้านล่างได้</span></div>`;
+  }else if(p.sel==="none") h+=`<div class="note"><span>ไม่ใส่คาบและวิชา</span></div>`;
+  else if(r.entry) h+=`<div class="note ok">${ic("check")}<span>เลือกเอง: คาบที่ ${r.pi+1} · ${esc(lab(r.entry))}</span></div>`;
+  el.innerHTML=h;
+  const yes=el.querySelector('[data-a="yes"]'), no=el.querySelector('[data-a="no"]');
+  if(yes) yes.addEventListener("click",()=>{p.confirmed=true;status(p);saveUI(p);saveToTable(p)});
+  if(no) no.addEventListener("click",()=>{p.denied=true;status(p);p.selEl.focus()});
+}
+function refresh(p){render(p);status(p);saveUI(p)}
+function fillSelect(p){
+  const day=p.date.getDay(); let html='<option value="auto">อัตโนมัติ (ตามเวลาถ่าย)</option>';
+  const days=[day,...[1,2,3,4,5].filter(d=>d!==day)].filter(d=>d>=1&&d<=5);
+  days.forEach(d=>{
+    const opts=schedule.map((e,i)=>({e,i})).filter(o=>o.e.d===d&&o.e.p<=periods.length).map(o=>`<option value="${o.i}">คาบ ${o.e.p} · ${esc(lab(o.e))}</option>`).join("");
+    if(opts) html+=`<optgroup label="วัน${TH_DAYS[d]}${d===day?" (วันที่ถ่าย)":""}">${opts}</optgroup>`;
+  });
+  html+='<option value="none">ไม่ใส่คาบและวิชา</option>';
+  p.selEl.innerHTML=html; p.selEl.value=p.sel;
+  if(p.selEl.value!==p.sel){p.sel="auto";p.selEl.value="auto"}
+}
+
+/* ---- cards ---- */
+let uid=0;
+const tick=()=>new Promise(r=>setTimeout(r,0));
+const reduced=()=>matchMedia("(prefers-reduced-motion:reduce)").matches;
+function skeleton(){
+  const d=document.createElement("div"); d.className="card glass";
+  d.innerHTML='<div class="shot shim"></div><div class="ctl"><div class="sk shim"></div><div class="sk shim" style="width:60%"></div></div>';
+  $("cards").appendChild(d); return d;
+}
+function removeCard(p,instant){
+  const i=photos.indexOf(p); if(i>=0)photos.splice(i,1); p.rv=(p.rv||0)+1;
+  const card=p.card, fin=()=>{card.remove();if(p.url)URL.revokeObjectURL(p.url);p.base=null};
+  if(instant||reduced()||!card.animate){fin();return}
+  const hgt=card.offsetHeight;
+  card.animate([
+    {height:hgt+"px",opacity:1,marginBottom:"0px",transform:"scale(1)"},
+    {height:"0px",opacity:0,marginBottom:"-16px",paddingTop:"0px",paddingBottom:"0px",transform:"scale(.97)"}
+  ],{duration:380,easing:"cubic-bezier(.16,1,.3,1)",fill:"forwards"}).onfinish=fin;
+}
+function addCard(p,sk){
+  const id=++uid; const card=document.createElement("div"); card.className="card glass";
+  card.innerHTML=`<div class="shot shim" style="aspect-ratio:${p.base.width}/${p.base.height}"><img class="out" alt="รูปที่ปั๊มลายน้ำแล้ว" decoding="async"></div>
+  <div class="ctl">
+    <div class="cardhead">${p.isSample?'<span class="tag">ตัวอย่าง</span>':'<span></span>'}<button type="button" class="ghost" data-del>${ic("trash")}ลบรูปนี้</button></div>
+    <div class="stat"></div>
+    <div class="savebar"></div>
+    <div class="field"><label for="pp${id}">คาบ / วิชา</label><select id="pp${id}"></select></div>
+    <div class="field"><label for="dt${id}">วันเวลาที่ถ่าย</label><input id="dt${id}" type="datetime-local" value="${dtLocal(p.date)}"></div>
+  </div>`;
+  p.shot=card.querySelector(".shot"); p.outEl=card.querySelector("img.out"); p.statEl=card.querySelector(".stat"); p.saveEl=card.querySelector(".savebar"); p.selEl=card.querySelector("#pp"+id); p.card=card;
+  p.sel="auto"; p.confirmed=false; p.denied=false;
+  fillSelect(p);
+  p.selEl.addEventListener("change",e=>{p.sel=e.target.value;p.denied=false;refresh(p)});
+  card.querySelector("#dt"+id).addEventListener("change",e=>{
+    const v=e.target.value; if(!v) return;
+    p.date=new Date(v); p.confirmed=false; p.denied=false; fillSelect(p); refresh(p);
+  });
+  card.querySelector("[data-del]").addEventListener("click",()=>removeCard(p));
+  if(sk&&sk.isConnected)sk.replaceWith(card); else $("cards").appendChild(card);
+  photos.push(p); refresh(p);
+}
+function refreshAll(){
+  photos.forEach(p=>{if(p.sel!=="auto"&&p.sel!=="none")p.sel="auto";p.confirmed=false;p.denied=false;fillSelect(p);refresh(p)});
+}
+
+const MAXPX=2048; // longest side kept in memory and saved
+async function toBase(f){
+  const url=URL.createObjectURL(f), img=new Image(); img.decoding="async"; img.src=url;
+  try{
+    await img.decode();
+    const nw=img.naturalWidth, nh=img.naturalHeight, s=Math.min(1,MAXPX/Math.max(nw,nh));
+    const c=document.createElement("canvas"); c.width=Math.round(nw*s); c.height=Math.round(nh*s);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    return c;
+  }finally{URL.revokeObjectURL(url)}
+}
+$("files").addEventListener("change",async e=>{
+  const files=[...e.target.files]; e.target.value=""; if(!files.length) return;
+  photos.filter(p=>p.isSample).forEach(p=>removeCard(p,true));
+  const sks=files.map(skeleton);
+  sks[0].scrollIntoView({behavior:reduced()?"auto":"smooth",block:"start"});
+  for(let i=0;i<files.length;i++){
+    const f=files[i], sk=sks[i];
+    try{
+      const buf=await f.slice(0,262144).arrayBuffer(); let d=exifDate(buf); let src="exif";
+      if(!d){d=new Date(f.lastModified||Date.now());src="file"}
+      const base=await toBase(f);
+      addCard({base,date:d,src},sk);
+    }catch(err){
+      sk.innerHTML='<div class="ctl"><div class="note warn"><span>เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่น หรือรูปแบบ JPG/PNG</span></div></div>';
+      setTimeout(()=>sk.remove(),4000);
+    }
+    await tick();
+  }
+});
+
+/* ---- settings ---- */
+function sums(){
+  $("infoSum").textContent=info.school||"ยังไม่ใส่";
+  $("schedSum").textContent=`${schedule.length} คาบ/สัปดาห์`;
+  $("perSum").textContent=`${periods.length} คาบ · ${dot(periods[0][0])}–${dot(periods[periods.length-1][1])}`;
+}
+let rdt=0; const reAll=()=>{clearTimeout(rdt);rdt=setTimeout(renderAll,220)};
+["school","who","teacher"].forEach(k=>{const el=$(k);el.value=info[k]||"";el.addEventListener("input",()=>{info[k]=el.value;save("wm2_info",info);sums();reAll()})});
+$("showRange").checked=info.showRange!==false;
+$("showRange").addEventListener("change",e=>{info.showRange=e.target.checked;save("wm2_info",info);reAll()});
+$("askBox").checked=askOn;
+$("askBox").addEventListener("change",e=>{askOn=e.target.checked;save("wm2_ask",askOn);photos.forEach(p=>{status(p);saveUI(p)})});
+
+function drawPeriods(){
+  const box=$("periods"); box.innerHTML="";
+  periods.forEach((q,i)=>{const r=document.createElement("div");r.className="prow";
+    r.innerHTML=`<b>คาบ ${i+1}</b><input type="time" id="ps${i}" value="${q[0]}" aria-label="เริ่มคาบ ${i+1}"><input type="time" id="pe${i}" value="${q[1]}" aria-label="จบคาบ ${i+1}"><button type="button" class="x ghost" aria-label="ลบคาบ ${i+1}">${ic("x")}</button>`;
+    r.querySelector("#ps"+i).addEventListener("change",e=>{q[0]=e.target.value;commitP(false)});
+    r.querySelector("#pe"+i).addEventListener("change",e=>{q[1]=e.target.value;commitP(false)});
+    r.querySelector("button").addEventListener("click",()=>{if(periods.length>1){periods.splice(i,1);commitP(true)}});
+    box.appendChild(r)});
+  $("np").innerHTML=periods.map((_,i)=>`<option value="${i+1}">คาบที่ ${i+1}</option>`).join("");
+}
+function commitP(redraw){save("wm2_periods",periods);sums();if(redraw)drawPeriods();drawSched();refreshAll()}
+$("addP").addEventListener("click",()=>{const last=periods[periods.length-1];const m=toMin(last[1])+55;periods.push([last[1],`${pad(Math.floor(m/60)%24)}:${pad(m%60)}`]);commitP(true)});
+$("resetP").addEventListener("click",()=>{periods=DEF_P.map(x=>x.slice());commitP(true)});
+
+$("nd").innerHTML=[1,2,3,4,5].map(d=>`<option value="${d}">${TH_DAYS[d]}</option>`).join("");
+function drawSched(){
+  const box=$("sched"); box.innerHTML="";
+  for(let d=1;d<=5;d++){
+    const wrap=document.createElement("div"); wrap.className="dayg";
+    wrap.innerHTML=`<div class="dayh">${TH_DAYS[d]}</div>`;
+    const list=schedule.map((e,i)=>({e,i})).filter(o=>o.e.d===d);
+    if(!list.length) wrap.insertAdjacentHTML("beforeend",'<div class="muted">ไม่มีคาบ</div>');
+    list.forEach(o=>{
+      const row=document.createElement("div"); row.className="erow";
+      row.innerHTML=`<span>คาบ ${o.e.p} · ${esc(lab(o.e))}</span><button type="button" aria-label="ลบคาบ ${o.e.p} วัน${TH_DAYS[d]}">${ic("trash")}</button>`;
+      row.querySelector("button").addEventListener("click",()=>{schedule.splice(o.i,1);commitS()});
+      wrap.appendChild(row);
+    });
+    box.appendChild(wrap);
+  }
+}
+function commitS(){sortS();save("wm2_sched",schedule);sums();drawSched();refreshAll()}
+$("addS").addEventListener("click",()=>{
+  const d=+$("nd").value,pn=+$("np").value,code=$("nc").value.trim(),cls=$("ncl").value.trim(),room=$("nr").value.trim();
+  if(!code) return;
+  const at=schedule.findIndex(s=>s.d===d&&s.p===pn); const e={d,p:pn,code,cls,room};
+  if(at>=0) schedule[at]=e; else schedule.push(e);
+  $("nc").value="";$("ncl").value="";$("nr").value="";
+  commitS();
+});
+$("resetS").addEventListener("click",()=>{schedule=DEF_S.map(x=>({...x}));commitS()});
+
+/* ---- sample ---- */
+async function sample(){
+  const c=document.createElement("canvas");c.width=1600;c.height=1200;const g=c.getContext("2d");
+  const bg=g.createLinearGradient(0,0,0,1200);bg.addColorStop(0,"#dfe6dc");bg.addColorStop(1,"#b9c4b5");g.fillStyle=bg;g.fillRect(0,0,1600,1200);
+  g.fillStyle="#2f4a3c";g.fillRect(260,140,1080,520);g.strokeStyle="#8a6a44";g.lineWidth=26;g.strokeRect(260,140,1080,520);
+  g.fillStyle="rgba(255,255,255,.75)";g.font='600 64px "IBM Plex Sans Thai",sans-serif';g.fillText("Unit 3: Daily Routines",380,300);
+  g.font='400 44px "IBM Plex Sans Thai",sans-serif';g.fillText("I wake up at six o'clock.",380,390);
+  g.fillStyle="#9a7b55";for(let i=0;i<4;i++)for(let j=0;j<2;j++)g.fillRect(150+i*360,800+j*200,280,40);
+  addCard({base:c,date:new Date(2026,10,3,10,42,0),src:"exif",isSample:true});
+}
+/* ================= storage =================
+   Today this runs on the Claude artifact runtime (db = rows, assets = jpegs).
+   At home: swap this one object for Firestore + Firebase Storage; nothing below needs to change.
+   Row shape, photos/{id}: {ts, day:"YYYY-MM-DD", pi (0-based, -1 = none), code, cls, room, w, h, full, thumb, savedAt} */
+const FB_CFG={apiKey:"AIzaSyBjh0aC8YORN7F65ziWQAiLUpfh_HlwUy4",authDomain:"stamp-practicum.firebaseapp.com",projectId:"stamp-practicum",storageBucket:"stamp-practicum.firebasestorage.app",messagingSenderId:"722627069991",appId:"1:722627069991:web:6bae10755d88bea593a602"};
+const FBU=m=>`https://www.gstatic.com/firebasejs/10.12.2/firebase-${m}.js`;
+const blobData=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)});
+async function shrink(blob,edge,cap){
+  const url=URL.createObjectURL(blob), im=new Image(); im.src=url;
+  try{await im.decode();
+    let s=Math.min(1,edge/Math.max(im.naturalWidth,im.naturalHeight));
+    for(let i=0;i<6;i++){
+      const c=document.createElement("canvas"); c.width=Math.round(im.naturalWidth*s); c.height=Math.round(im.naturalHeight*s);
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      for(const q of [.82,.72,.62]){const d=await blobData(await new Promise(r=>c.toBlob(r,"image/jpeg",q))); if(d.length<cap) return d}
+      s*=.8;
+    }
+  }finally{URL.revokeObjectURL(url)}
+  throw Object.assign(new Error("big"),{code:"too_big"});
+}
+const Store={
+  ok:false, checked:false, mode:"none", state:"", user:null, onAuth:null, assets:null, col:null, fb:null,
+  async init(){
+    try{
+      const c=window.claude;
+      if(c&&c.use){
+        const [db,assets]=await Promise.all([c.use("db"),c.use("assets")]);
+        if(db&&assets){this.assets=assets; this.col=db.collection("photos"); this.mode="claude"; this.ok=true; this.checked=true; return}
+      }
+    }catch(e){}
+    try{await this.initFb()}catch(e){this.mode="none"; this.ok=false}
+    this.checked=true;
+  },
+  async initFb(){
+    const M=window.__FBMOCK;
+    const [A,Au,F]=M?[M.A,M.Au,M.F]:await Promise.all([import(FBU("app")),import(FBU("auth")),import(FBU("firestore"))]);
+    const app=A.initializeApp(FB_CFG), auth=Au.getAuth(app), db=F.getFirestore(app);
+    this.fb={A,Au,F,auth,db}; this.col=F.collection(db,"photos"); this.mode="fb";
+    const u=await new Promise((res,rej)=>{const off=Au.onAuthStateChanged(auth,x=>{off&&off();res(x)},rej)});
+    this.user=u||(await Au.signInAnonymously(auth)).user;
+    await this.checkOwner();
+  },
+  async checkOwner(){
+    try{
+      const s=await this.fb.F.getDoc(this.fb.F.doc(this.fb.db,"config","owner"));
+      this.state=!s.exists()?"free":(s.data().uid===this.user.uid?"owner":"other");
+    }catch(e){this.state="err"}
+    this.ok=this.state==="owner";
+  },
+  async claim(){
+    await this.fb.F.setDoc(this.fb.F.doc(this.fb.db,"config","owner"),{uid:this.user.uid,at:Date.now()});
+    await this.checkOwner();
+  },
+  url(v){return this.mode==="claude"?"/_blob/"+v:v},
+  subscribe(cb,err){
+    const map=s=>cb(s.docs.map(d=>({id:d.id,...d.data()})));
+    return this.mode==="fb"?this.fb.F.onSnapshot(this.col,map,err):this.col.onSnapshot(map,err);
+  },
+  async save(meta,full,thumb,prev){
+    const id=prev?prev.id:Math.random().toString(36).slice(2,8)+Date.now().toString(36);
+    if(this.mode==="fb"){
+      const f=await shrink(full,1400,830000), t=await blobData(thumb);
+      const doc={...meta,full:f,thumb:t,savedAt:Date.now()};
+      await this.fb.F.setDoc(this.fb.F.doc(this.col,id),doc);
+      return {id,...doc};
+    }
+    const f=await this.assets.upload(full,{type:"image/jpeg"});
+    let t; try{t=await this.assets.upload(thumb,{type:"image/jpeg"})}catch(e){this.assets.delete(f.id).catch(()=>{});throw e}
+    const doc={...meta,full:f.id,thumb:t.id,savedAt:Date.now()};
+    try{await this.col.doc(id).set(doc)}catch(e){this.assets.delete(f.id).catch(()=>{});this.assets.delete(t.id).catch(()=>{});throw e}
+    if(prev){this.assets.delete(prev.full).catch(()=>{});this.assets.delete(prev.thumb).catch(()=>{})}
+    return {id,...doc};
+  },
+  async remove(x){
+    if(this.mode==="fb"){await this.fb.F.deleteDoc(this.fb.F.doc(this.col,x.id)); return}
+    await this.col.doc(x.id).delete();
+    this.assets.delete(x.full).catch(()=>{}); this.assets.delete(x.thumb).catch(()=>{});
+  }
+};
+
+/* ---- save a stamped photo into the timetable ---- */
+const lockHtml=what=>{
+  if(Store.state==="free") return `<div class="note"><span>ตั้งค่าเครื่องนี้เป็นของคุณก่อน (ครั้งเดียว) จึงจะ${what}</span></div><button type="button" class="pri" data-a="login">ตั้งค่าเครื่องนี้</button>`;
+  if(Store.state==="other") return `<div class="note warn"><span>เว็บนี้ผูกกับอีกเครื่องแล้ว จึงยัง${what.replace("ได้","ไม่ได้")} ถ้าเปลี่ยนเครื่องหรือล้างข้อมูลเบราว์เซอร์ ให้แจ้ง Claude เพื่อรีเซ็ต</span></div>`;
+  return `<div class="note warn"><span>เชื่อมต่อฐานข้อมูลไม่ได้ ตรวจอินเทอร์เน็ตแล้วเปิดหน้านี้ใหม่</span></div>`};
+const errText=e=>{const c=e&&e.code;
+  if(c==="quota_or_state"||c==="quota_exceeded")return "พื้นที่เก็บรูปเต็ม บันทึกเพิ่มไม่ได้";
+  if(c==="rate_limited"||c==="resource_exhausted")return "บันทึกถี่เกินไป รอสักครู่แล้วลองใหม่";
+  if(c==="too_big")return "รูปใหญ่เกินไปสำหรับบันทึก";
+  if(c==="permission-denied")return "ไม่มีสิทธิ์บันทึก ลองออกจากระบบแล้วเข้าใหม่ด้วยอีเมลเจ้าของ";
+  return "บันทึกไม่สำเร็จ ลองกดอีกครั้ง"};
+const sig=p=>{const r=resolve(p);return JSON.stringify([p.date.getTime(),r.pi,r.entry?lab(r.entry):"",info.school,info.who,info.teacher,info.showRange!==false])};
+const pendingAsk=p=>{const r=resolve(p);return p.sel==="auto"&&!!r.entry&&askOn&&!p.confirmed&&!p.denied};
+async function thumbOf(blob){
+  const url=URL.createObjectURL(blob), im=new Image(); im.src=url;
+  try{await im.decode()}finally{}
+  const s=Math.min(1,360/Math.max(im.naturalWidth,im.naturalHeight)), c=document.createElement("canvas");
+  c.width=Math.round(im.naturalWidth*s); c.height=Math.round(im.naturalHeight*s);
+  c.getContext("2d").drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(url);
+  return new Promise(r=>c.toBlob(r,"image/jpeg",0.78));
+}
+async function saveToTable(p){
+  if(!Store.ok||p.saving||!p.base) return;
+  p.saving=true; p.err=null; saveUI(p);
+  try{
+    const sg=sig(p), r=resolve(p), e=r.entry, w=p.base.width, h=p.base.height, ts=p.date.getTime(), day=dayKey(p.date);
+    const full=await p.blobP; if(!full) throw new Error("render");
+    const thumb=await thumbOf(full);
+    p.doc=await Store.save({ts,day,pi:r.pi,code:e?e.code:"",cls:e?e.cls:"",room:e?e.room:"",w,h},full,thumb,p.doc);
+    p.savedSig=sg;
+  }catch(err){p.err=errText(err)}
+  p.saving=false; saveUI(p);
+}
+function saveUI(p){
+  const el=p.saveEl; if(!el) return;
+  if(!Store.checked){el.innerHTML="";return}
+  if(!Store.ok){
+    if(Store.mode==="fb"){el.innerHTML=lockHtml("บันทึกลงตารางได้");return}
+    el.innerHTML='<div class="note"><span>บันทึกลงตารางได้เมื่อเปิดผ่านบัญชีเจ้าของใน Claude</span></div>';return}
+  const clean=p.doc&&p.savedSig===sig(p); let h="";
+  if(p.saving) h='<button type="button" class="pri" disabled><span class="spin"></span>กำลังบันทึก…</button>';
+  else if(clean) h=`<div class="note ok">${ic("check")}<span>บันทึกลงตารางแล้ว</span></div><button type="button" data-a="view">ดูในตาราง</button>`;
+  else if(pendingAsk(p)) h="";
+  else h=`${p.doc?'<div class="note warn"><span>แก้ไขแล้ว ยังไม่ได้อัปเดตในตาราง</span></div>':""}<button type="button" class="pri" data-a="save">${ic("plus")}${p.doc?"อัปเดตในตาราง":"บันทึกลงตาราง"}</button>`;
+  if(p.err) h=`<div class="note warn"><span>${esc(p.err)}</span></div>`+h;
+  el.innerHTML=h;
+  const sv=el.querySelector('[data-a="save"]'), vw=el.querySelector('[data-a="view"]');
+  if(sv) sv.addEventListener("click",()=>saveToTable(p));
+  if(vw) vw.addEventListener("click",()=>viewInTable(p));
+}
+
+/* ================= timetable summary ================= */
+const MON_S=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const DOW_S=["อา","จ","อ","พ","พฤ","ศ","ส"];
+const mondayOf=d=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const dayKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const rangeLabel=(a,b)=>a.getMonth()===b.getMonth()
+  ?`${a.getDate()} – ${b.getDate()} ${MON_S[b.getMonth()]} ${b.getFullYear()+543}`
+  :`${a.getDate()} ${MON_S[a.getMonth()]} – ${b.getDate()} ${MON_S[b.getMonth()]} ${b.getFullYear()+543}`;
+let docs=[], loaded=false, slow=false, subErr=null, weekStart=mondayOf(new Date()), tsel=null, delId=null, gridAnim=false, tmsg="", lastDetail="";
+
+function renderTable(){
+  const days=[0,1,2,3,4,5,6].map(i=>addDays(weekStart,i));
+  const kidx=new Map(days.map((d,i)=>[dayKey(d),i]));
+  const cells=new Map(), misc=[]; let weekCount=0;
+  docs.forEach(x=>{
+    const i=kidx.get(x.day); if(i===undefined) return; weekCount++;
+    if(i<5&&x.pi>=0&&x.pi<periods.length){const k=i+"-"+x.pi; if(!cells.has(k))cells.set(k,[]); cells.get(k).push(x)} else misc.push(x);
+  });
+  cells.forEach(a=>a.sort((p,q)=>p.ts-q.ts)); misc.sort((p,q)=>p.ts-q.ts);
+  $("wRange").textContent=rangeLabel(days[0],days[4]);
+  $("wStat").textContent=weekCount?`${weekCount} รูป${cells.size?` · ${cells.size} คาบ`:""}`:(loaded?"ยังไม่มีรูปในสัปดาห์นี้":"");
+  $("wToday").hidden=weekStart.getTime()===mondayOf(new Date()).getTime();
+
+  let n="";
+  if(Store.checked&&!Store.ok) n=Store.mode==="fb"?lockHtml("ดูรูปในตารางได้"):'<div class="note warn"><span>ดูตารางที่มีรูปได้เมื่อเปิดหน้านี้ผ่าน Claude ด้วยบัญชีเจ้าของ</span></div>';
+  else if(subErr) n='<div class="note warn"><span>อ่านรูปจากที่เก็บไม่ได้ในตอนนี้</span></div>';
+  else if(Store.ok&&!loaded) n=`<div class="note">${slow?"<span>ยังเชื่อมต่อที่เก็บรูปไม่ได้ ข้อมูลอาจไม่ล่าสุด</span>":'<span class="spin"></span><span>กำลังโหลดรูป…</span>'}</div>`;
+  else if(loaded&&!docs.length) n=`<div class="note ok">${ic("camera")}<span>ยังไม่มีรูปในตาราง ถ่ายรูปแล้วกด “บันทึกลงตาราง” ในหน้าปั๊มรูป</span></div>`;
+  if(tmsg) n+=`<div class="note warn"><span>${esc(tmsg)}</span></div>`;
+  $("tnote").innerHTML=n;
+
+  const todayK=dayKey(new Date());
+  const cols=[]; for(let pi=0;pi<periods.length;pi++){
+    if(schedule.some(s=>s.d>=1&&s.d<=5&&s.p===pi+1)||[0,1,2,3,4].some(i=>cells.has(i+"-"+pi))) cols.push(pi);
+  }
+  let h='<div class="th dh"></div>'+cols.map(pi=>`<div class="th ph"><b>${pi+1}</b>${dot(periods[pi][0])}</div>`).join("");
+  for(let i=0;i<5;i++){
+    h+=`<div class="th dh${dayKey(days[i])===todayK?" today":""}">${DOW_S[i+1]}<b>${days[i].getDate()}</b></div>`;
+    for(const pi of cols){
+      const k=i+"-"+pi, list=cells.get(k), e=schedule.find(s=>s.d===i+1&&s.p===pi+1);
+      if(list){
+        const last=list[list.length-1], name=e?(e.cls||e.code):(last.cls||last.code||"");
+        h+=`<button type="button" class="cell has${tsel&&tsel.t==="cell"&&tsel.k===k?" on":""}" data-k="${k}" aria-label="คาบที่ ${pi+1} ${DOW_S[i+1]} ${list.length} รูป"><img src="${Store.url(last.thumb)}" alt="" loading="lazy" decoding="async">${list.length>1?`<span class="bd">${list.length}</span>`:""}<span class="lb">${esc(name)}</span></button>`;
+      }else if(e){
+        h+=`<div class="cell sched"><b>${esc(e.cls||"")}</b><span>${esc(e.room||(e.cls?"":e.code))}</span></div>`;
+      }else h+='<div class="cell empty"></div>';
+    }
+  }
+  const g=$("tgrid"), keep=g.scrollLeft;
+  g.innerHTML=`<div class="tg" style="grid-template-columns:42px repeat(${cols.length},68px)">${h}</div>`; g.scrollLeft=keep;
+  {const k=g.firstElementChild.children, w=cols.length+1; for(let q=0;q<k.length;q++){if(q%w===w-1)k[q].classList.add("lc"); if(q>=k.length-w)k[q].classList.add("lr")}}
+  if(gridAnim){g.classList.remove("swap");void g.offsetWidth;g.classList.add("swap");gridAnim=false}
+
+  $("tmisc").innerHTML=misc.length?`<div class="misc glass"><div class="lbl">ไม่ได้ระบุคาบ หรือถ่ายนอกวันเรียน</div><div class="mgrid">${misc.map(x=>`<button type="button" class="mt${tsel&&tsel.t==="doc"&&tsel.id===x.id?" on":""}" data-doc="${x.id}" aria-label="เปิดรูป"><img src="${Store.url(x.thumb)}" alt="" loading="lazy" decoding="async"></button>`).join("")}</div></div>`:"";
+
+  let list=[];
+  if(tsel) list=tsel.t==="cell"?(cells.get(tsel.k)||[]):docs.filter(x=>x.id===tsel.id&&kidx.has(x.day));
+  if(!list.length){tsel=null;lastDetail="";$("tdetail").innerHTML="";return}
+  const f=list[0], d=new Date(f.ts), e=schedule.find(s=>s.d===((d.getDay()+6)%7)+1&&s.p===f.pi+1)||f;
+  const key=tsel.t+":"+(tsel.k||tsel.id), fresh=key!==lastDetail; lastDetail=key;
+  $("tdetail").innerHTML=`<div class="detail glass${fresh?" fresh":""}">
+    <div class="dhead"><div><h2>${esc(thDate(d))}${f.pi>=0?` · คาบที่ ${f.pi+1}`:" · นอกเวลาเรียน"}</h2><p>${esc(lab(e))}</p></div><button type="button" class="ghost" data-a="close" aria-label="ปิด">${ic("x")}</button></div>
+    ${list.map(x=>{const t=new Date(x.ts),del=delId===x.id;return `<div class="pitem"><img src="${Store.url(x.full)}" alt="รูปคาบสังเกตการสอน เวลา ${pad(t.getHours())}:${pad(t.getMinutes())}" style="aspect-ratio:${x.w}/${x.h}" decoding="async"><div class="pmeta"><span>${pad(t.getHours())}:${pad(t.getMinutes())} น.</span>${del?`<span class="btns"><button type="button" class="pri" data-a="delok" data-id="${x.id}">ลบถาวร</button><button type="button" data-a="delno">ยกเลิก</button></span>`:`<button type="button" class="ghost" data-a="del" data-id="${x.id}">${ic("trash")}ลบ</button>`}</div></div>`}).join("")}
+    <p class="muted" style="margin:0;text-align:center">กดค้างที่รูป แล้วเลือก “บันทึกไปยังรูปภาพ”</p>
+  </div>`;
+}
+const revealDetail=()=>{const el=$("tdetail").firstElementChild; if(el) el.scrollIntoView({behavior:reduced()?"auto":"smooth",block:"start"})};
+$("tgrid").addEventListener("click",e=>{
+  const b=e.target.closest("[data-k]"); if(!b) return; const k=b.dataset.k;
+  tsel=(tsel&&tsel.t==="cell"&&tsel.k===k)?null:{t:"cell",k}; delId=null; tmsg=""; renderTable(); if(tsel) revealDetail();
+});
+$("tmisc").addEventListener("click",e=>{
+  const b=e.target.closest("[data-doc]"); if(!b) return; const id=b.dataset.doc;
+  tsel=(tsel&&tsel.t==="doc"&&tsel.id===id)?null:{t:"doc",id}; delId=null; tmsg=""; renderTable(); if(tsel) revealDetail();
+});
+$("tdetail").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-a]"); if(!b) return; const a=b.dataset.a, id=b.dataset.id;
+  if(a==="close"){tsel=null;delId=null;renderTable()}
+  else if(a==="del"){delId=id;renderTable()}
+  else if(a==="delno"){delId=null;renderTable()}
+  else if(a==="delok"){
+    const x=docs.find(z=>z.id===id); delId=null; if(!x) return; b.disabled=true;
+    try{await Store.remove(x); docs=docs.filter(z=>z.id!==id); $("cnt").textContent=docs.length||""; tmsg=""; syncCards()}
+    catch(err){tmsg="ลบรูปไม่สำเร็จ ลองอีกครั้ง"}
+    renderTable();
+  }
+});
+const shiftWeek=n=>{weekStart=addDays(weekStart,n*7);tsel=null;delId=null;tmsg="";gridAnim=true;renderTable()};
+$("wPrev").addEventListener("click",()=>shiftWeek(-1));
+$("wNext").addEventListener("click",()=>shiftWeek(1));
+$("wToday").addEventListener("click",()=>{weekStart=mondayOf(new Date());tsel=null;delId=null;tmsg="";gridAnim=true;renderTable()});
+function syncCards(){
+  const ids=new Map(docs.map(x=>[x.id,x]));
+  photos.forEach(p=>{
+    if(!p.doc||p.saving) return;
+    const f=ids.get(p.doc.id);
+    if(f) p.doc=f; else {p.doc=null;p.savedSig=null;saveUI(p)}
+  });
+}
+function viewInTable(p){
+  if(!p.doc) return; const d=new Date(p.doc.ts), i=(d.getDay()+6)%7;
+  weekStart=mondayOf(d); delId=null; tmsg=""; gridAnim=true;
+  tsel=(i<5&&p.doc.pi>=0&&p.doc.pi<periods.length)?{t:"cell",k:i+"-"+p.doc.pi}:{t:"doc",id:p.doc.id};
+  setView("table"); setTimeout(revealDetail,80);
+}
+function setView(v,quiet){
+  v=v==="table"?"table":"stamp";
+  $("v-stamp").hidden=v!=="stamp"; $("v-table").hidden=v!=="table";
+  document.querySelector(".seg").dataset.v=v;
+  $("tab-stamp").setAttribute("aria-selected",String(v==="stamp")); $("tab-table").setAttribute("aria-selected",String(v==="table"));
+  if(v==="table") renderTable();
+  if(!quiet){try{location.hash=v}catch(e){}}
+  window.scrollTo(0,0);
+}
+document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.v)));
+addEventListener("hashchange",()=>setView((location.hash||"").slice(1),true));
+let unsub=null;
+function startSub(){
+  if(unsub) return;
+  const t=setTimeout(()=>{if(!loaded){slow=true;renderTable()}},10000);
+  unsub=Store.subscribe(list=>{loaded=true;slow=false;subErr=null;clearTimeout(t);docs=list;$("cnt").textContent=docs.length||"";renderTable();syncCards()},
+    err=>{subErr=err;clearTimeout(t);renderTable()});
+}
+function stopSub(){if(typeof unsub==="function")unsub(); unsub=null; docs=[]; loaded=false; subErr=null; $("cnt").textContent=""}
+
+/* ---- one-time claim of this device (Firebase mode only) ---- */
+const lg=$("login"), lgMsg=(t,bad)=>{const m=$("lgMsg");m.hidden=!t;m.className="note"+(bad?" warn":"");m.firstElementChild.textContent=t||""};
+function openLogin(){lgMsg(""); if(!lg.open) lg.showModal()}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-a="login"]'); if(b) openLogin()});
+$("lgX").addEventListener("click",()=>lg.close());
+$("lgOk").addEventListener("click",async e=>{const b=e.currentTarget;b.disabled=true;lgMsg("");
+  try{await Store.claim(); Store.onAuth&&Store.onAuth(); if(Store.ok)lg.close(); else lgMsg("ตั้งค่าไม่สำเร็จ อาจมีเครื่องอื่นตั้งไปก่อนแล้ว",true)}
+  catch(err){lgMsg("ตั้งค่าไม่สำเร็จ ลองอีกครั้ง",true)}
+  b.disabled=false});
+Store.onAuth=()=>{photos.forEach(saveUI); if(Store.ok)startSub(); else stopSub(); renderTable()};
+
+sums();drawPeriods();drawSched();sample();
+setView((location.hash||"").slice(1),true);
+Store.init().then(()=>{photos.forEach(saveUI);if(Store.ok)startSub();renderTable()});
+// first paint does not wait for the font; photos re-stamp once it arrives
+if(document.fonts)Promise.all(["400","600","700"].map(w=>document.fonts.load(`${w} 40px "IBM Plex Sans Thai"`,"คาบที่ ม. ห้อง 0123456789"))).then(renderAll,()=>{});
+</script>
+
+</body>
+</html>

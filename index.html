@@ -360,7 +360,7 @@ const TH_MON=["มกราคม","กุมภาพันธ์","มีน�
 const DEF_P=[["08:30","09:25"],["09:25","10:20"],["10:20","11:15"],["11:15","12:10"],["12:10","13:05"],["13:05","14:00"],["14:00","14:55"],["14:55","15:50"],["15:50","16:45"]];
 // ตารางสอน 0821 ครูฐิติภา เหล่าเสนา (ไม่รวมคาบที่ขีดฆ่า) d: 1=จันทร์ ... 5=ศุกร์
 const S=(d,p,code,cls,room)=>({d,p,code,cls,room});
-const DEF_S=[S(1,3,"อ22102","2/9","213"),S(2,2,"อ22102","2/2","225"),S(2,5,"อ22102","2/10","225"),S(3,5,"อ22102","2/10","225"),S(4,3,"อ22102","2/9","225"),S(4,6,"อ22102","2/3","613"),S(5,1,"อ22102","2/2","SCI203"),S(5,4,"อ22102","2/9","225")];
+const DEF_S=[S(1,3,"อ22102","2/9","213"),S(2,1,"อ22102","2/2","225"),S(2,5,"อ22102","2/10","225"),S(3,5,"อ22102","2/10","225"),S(4,3,"อ22102","2/9","225"),S(4,6,"อ22102","2/3","613"),S(5,1,"อ22102","2/2","SCI203"),S(5,4,"อ22102","2/9","225")];
 const DEF_INFO={school:"โรงเรียนภูเขียว",who:"นายจิตติพัฒน์ ทักษะวิเรขะพันธ์",teacher:"นางสาวฐิติภา เหล่าเสนา",showRange:true};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -368,7 +368,7 @@ const ic=n=>`<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let periods=load("wm2_periods",DEF_P.map(x=>x.slice()));
-let schedule=load("wm5_sched",DEF_S.map(x=>({...x})));
+let schedule=load("wm6_sched",DEF_S.map(x=>({...x})));
 let info={...DEF_INFO,...load("wm2_info",{})};
 let askOn=load("wm2_ask",true);
 if(!Array.isArray(periods)||!periods.length)periods=DEF_P.map(x=>x.slice());
@@ -644,7 +644,7 @@ function drawSched(){
     box.appendChild(wrap);
   }
 }
-function commitS(){sortS();save("wm5_sched",schedule);sums();drawSched();refreshAll()}
+function commitS(){sortS();save("wm6_sched",schedule);sums();drawSched();refreshAll()}
 $("addS").addEventListener("click",()=>{
   const d=+$("nd").value,pn=+$("np").value,code=$("nc").value.trim(),cls=$("ncl").value.trim(),room=$("nr").value.trim();
   if(!code) return;

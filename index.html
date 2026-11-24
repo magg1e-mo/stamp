@@ -705,19 +705,9 @@ const Store={
     this.fb={A,Au,F,auth,db}; this.col=F.collection(db,"photos"); this.mode="fb";
     const u=await new Promise((res,rej)=>{const off=Au.onAuthStateChanged(auth,x=>{off&&off();res(x)},rej)});
     this.user=u||(await Au.signInAnonymously(auth)).user;
-    await this.checkOwner();
+    this.state="locked"; this.ok=false;
   },
-  async checkOwner(){
-    try{
-      const s=await this.fb.F.getDoc(this.fb.F.doc(this.fb.db,"config","owner"));
-      this.state=!s.exists()?"free":(s.data().uid===this.user.uid?"owner":"other");
-    }catch(e){this.state="err"}
-    this.ok=this.state==="owner";
-  },
-  async claim(){
-    await this.fb.F.setDoc(this.fb.F.doc(this.fb.db,"config","owner"),{uid:this.user.uid,at:Date.now()});
-    await this.checkOwner();
-  },
+  async unlock(pin){const F=this.fb.F,db=this.fb.db,enc=new TextEncoder(),hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");const km=await crypto.subtle.importKey("raw",enc.encode(String(pin)),"PBKDF2",false,["deriveBits"]);const key=hex(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:enc.encode("stamp-practicum-v1"),iterations:150000},km,256)).slice(0,40);const check=hex(await crypto.subtle.digest("SHA-256",enc.encode(key+":check")));const ref=F.doc(db,"config","vault"),s=await F.getDoc(ref);if(!s.exists())await F.setDoc(ref,{check,at:Date.now()});else if(s.data().check!==check)throw Object.assign(new Error("pin"),{code:"badpin"});this.col=F.collection(db,"vault/"+key+"/photos");this.state="open";this.ok=true;this.migrate().catch(()=>{})},  async migrate(){let done=false;try{done=localStorage.getItem("wm_migrated_v1")==="1"}catch(e){}const F=this.fb.F,db=this.fb.db;if(done||!F.getDocs)return;const o=await F.getDoc(F.doc(db,"config","owner"));if(o.exists()&&o.data().uid===this.user.uid){const old=await F.getDocs(F.collection(db,"photos"));for(const d of old.docs)await F.setDoc(F.doc(this.col,d.id),d.data())}try{localStorage.setItem("wm_migrated_v1","1")}catch(e){}},
   url(v){return this.mode==="claude"?"/_blob/"+v:v},
   subscribe(cb,err){
     const map=s=>cb(s.docs.map(d=>({id:d.id,...d.data()})));
@@ -747,14 +737,13 @@ const Store={
 
 /* ---- save a stamped photo into the timetable ---- */
 const lockHtml=what=>{
-  if(Store.state==="free") return `<div class="note"><span>ตั้งค่าเครื่องนี้เป็นของคุณก่อน (ครั้งเดียว) จึงจะ${what}</span></div><button type="button" class="pri" data-a="login">ตั้งค่าเครื่องนี้</button>`;
-  if(Store.state==="other") return `<div class="note warn"><span>เว็บนี้ผูกกับอีกเครื่องแล้ว จึงยัง${what.replace("ได้","ไม่ได้")} ถ้าเปลี่ยนเครื่องหรือล้างข้อมูลเบราว์เซอร์ ให้แจ้ง Claude เพื่อรีเซ็ต</span></div>`;
+  if(Store.state==="locked") return `<div class="note"><span>ใส่ PIN ก่อนจึงจะ${what}</span></div><button type="button" class="pri" data-a="login">ใส่ PIN</button>`;
   return `<div class="note warn"><span>เชื่อมต่อฐานข้อมูลไม่ได้ ตรวจอินเทอร์เน็ตแล้วเปิดหน้านี้ใหม่</span></div>`};
 const errText=e=>{const c=e&&e.code;
   if(c==="quota_or_state"||c==="quota_exceeded")return "พื้นที่เก็บรูปเต็ม บันทึกเพิ่มไม่ได้";
   if(c==="rate_limited"||c==="resource_exhausted")return "บันทึกถี่เกินไป รอสักครู่แล้วลองใหม่";
   if(c==="too_big")return "รูปใหญ่เกินไปสำหรับบันทึก";
-  if(c==="permission-denied")return "ไม่มีสิทธิ์บันทึก ลองออกจากระบบแล้วเข้าใหม่ด้วยอีเมลเจ้าของ";
+  if(c==="permission-denied")return "ไม่มีสิทธิ์บันทึก ลองปิดแอปแล้วเปิดใหม่ ใส่ PIN อีกครั้ง";
   return "บันทึกไม่สำเร็จ ลองกดอีกครั้ง"};
 const sig=p=>{const r=resolve(p);return JSON.stringify([p.date.getTime(),r.pi,r.entry?lab(r.entry):"",info.school,info.who,info.teacher,info.showRange!==false])};
 const pendingAsk=p=>{const r=resolve(p);return p.sel==="auto"&&!!r.entry&&askOn&&!p.confirmed&&!p.denied};
@@ -924,18 +913,15 @@ function stopSub(){if(typeof unsub==="function")unsub(); unsub=null; docs=[]; lo
 
 /* ---- one-time claim of this device (Firebase mode only) ---- */
 const lg=$("login"), lgMsg=(t,bad)=>{const m=$("lgMsg");m.hidden=!t;m.className="note"+(bad?" warn":"");m.firstElementChild.textContent=t||""};
-function openLogin(){lgMsg(""); if(!lg.open) lg.showModal()}
+function openLogin(){lgMsg("");if(!lg.open){lg.showModal();setTimeout(()=>pinEl.focus(),50)}}
 document.addEventListener("click",e=>{const b=e.target.closest('[data-a="login"]'); if(b) openLogin()});
 $("lgX").addEventListener("click",()=>lg.close());
-$("lgOk").addEventListener("click",async e=>{const b=e.currentTarget;b.disabled=true;lgMsg("");
-  try{await Store.claim(); Store.onAuth&&Store.onAuth(); if(Store.ok)lg.close(); else lgMsg("ตั้งค่าไม่สำเร็จ อาจมีเครื่องอื่นตั้งไปก่อนแล้ว",true)}
-  catch(err){lgMsg("ตั้งค่าไม่สำเร็จ ลองอีกครั้ง",true)}
-  b.disabled=false});
+const pinEl=document.createElement("input");pinEl.id="pin";pinEl.type="password";pinEl.inputMode="numeric";pinEl.maxLength=4;pinEl.autocomplete="off";pinEl.setAttribute("aria-label","PIN 4 หลัก");pinEl.style.cssText="font:inherit;font-size:1.6rem;letter-spacing:.5em;text-align:center;padding:10px;border-radius:16px;border:1px solid var(--edge);background:var(--field);color:var(--fg)";$("lgTitle").textContent="ใส่ PIN";lg.querySelector("p").textContent="ใส่ PIN 4 หลักเพื่อดูและบันทึกรูปในตาราง เครื่องไหนใส่ PIN ถูกก็เห็นรูปชุดเดียวกัน";$("lgOk").textContent="เข้า";lg.querySelector(".btns").before(pinEl);async function submitPin(){const b=$("lgOk"),v=pinEl.value.trim();if(!/^\d{4}$/.test(v)){lgMsg("ใส่เลข 4 หลัก",true);return}b.disabled=true;lgMsg("");try{await Store.unlock(v);pinEl.value="";Store.onAuth&&Store.onAuth();lg.close()}catch(err){pinEl.value="";lgMsg(err&&err.code==="badpin"?"PIN ไม่ถูกต้อง":"เข้าไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง",true)}b.disabled=false}$("lgOk").addEventListener("click",submitPin);pinEl.addEventListener("keydown",e=>{if(e.key==="Enter")submitPin()});pinEl.addEventListener("input",()=>{pinEl.value=pinEl.value.replace(/\D/g,"");if(pinEl.value.length===4)submitPin()});
 Store.onAuth=()=>{photos.forEach(saveUI); if(Store.ok)startSub(); else stopSub(); renderTable()};
 
 sums();drawPeriods();drawSched();sample();
 setView((location.hash||"").slice(1),true);
-Store.init().then(()=>{photos.forEach(saveUI);if(Store.ok)startSub();renderTable()});
+Store.init().then(()=>{photos.forEach(saveUI);if(Store.ok)startSub();renderTable();if(Store.state==="locked")openLogin()});
 // first paint does not wait for the font; photos re-stamp once it arrives
 if(document.fonts)Promise.all(["400","600","700"].map(w=>document.fonts.load(`${w} 40px "FC Vision"`,"คาบที่ ม. ห้อง 0123456789"))).then(renderAll,()=>{});
 (()=>{const b=$("impBtn"),f=$("impFiles"),dlg=document.createElement("dialog");dlg.className="lg";document.body.appendChild(dlg);const q=s=>dlg.querySelector(s);const lbl=v=>{const d=new Date(v);if(isNaN(d))return"ใส่วันเวลาให้ถูกต้อง";const r=resolve({date:d,sel:"auto"});return r.pi<0?"ไม่ตรงคาบเรียน":"คาบที่ "+(r.pi+1)+(r.entry?" · "+lab(r.entry):"")};b.onclick=()=>{if(Store.ok)f.click();else if(Store.state==="free")openLogin()};f.onchange=()=>{const fs=[...f.files];f.value="";if(!fs.length)return;dlg.innerHTML='<h2>เพิ่มรูปที่ปั๊มแล้ว</h2><p class="muted">ใส่วันและเวลาตามที่ปั๊มไว้บนรูป ระบบจะจัดเข้าคาบให้</p>'+fs.map((x,i)=>{const v=dtLocal(new Date(x.lastModified));return'<div style="display:flex;gap:10px;align-items:center;margin:10px 0"><img src="'+URL.createObjectURL(x)+'" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:8px"><div style="flex:1;min-width:0"><input type="datetime-local" data-i="'+i+'" value="'+v+'" style="width:100%"><small data-l="'+i+'">'+lbl(v)+'</small></div></div>'}).join("")+'<div class="btns"><button type="button" class="pri" id="impOk">บันทึกลงตาราง</button></div><div id="impMsg" class="note" hidden><span></span></div><button type="button" class="ghost" id="impX">ยกเลิก</button>';dlg.querySelectorAll("input").forEach(el=>{el.oninput=()=>{q('[data-l="'+el.dataset.i+'"]').textContent=lbl(el.value)}});q("#impX").onclick=()=>dlg.close();q("#impOk").onclick=async ev=>{const ok=ev.currentTarget,m=q("#impMsg");ok.disabled=true;let n=0;try{for(let i=0;i<fs.length;i++){const d=new Date(q('input[data-i="'+i+'"]').value);if(isNaN(d))throw{code:"bad"};const r=resolve({date:d,sel:"auto"}),en=r.entry,full=fs[i],th=await thumbOf(full),im=new Image();im.src=URL.createObjectURL(full);await im.decode();await Store.save({ts:d.getTime(),day:dayKey(d),pi:r.pi,code:en?en.code:"",cls:en?en.cls:"",room:en?en.room:"",w:im.naturalWidth,h:im.naturalHeight},full,th,null);n++}dlg.close()}catch(err){m.hidden=false;m.firstElementChild.textContent=err&&err.code==="bad"?"วันเวลาไม่ถูกต้อง":errText(err)+(n?" (บันทึกแล้ว "+n+" รูป)":"");ok.disabled=false}};dlg.showModal()}})();

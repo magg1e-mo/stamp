@@ -383,6 +383,7 @@ dialog.lg p{margin:0}
         <div class="sech"><h2>ซิงก์รูป</h2></div>
         <div id="syncInfo" class="note"><span>กำลังเชื่อมต่อ…</span></div>
       </div>
+      <p class="muted" style="text-align:center;margin:8px 0 0">STAMP เวอร์ชัน <span id="appV"></span></p>
     </div>
   </section>
 </div>
@@ -404,6 +405,15 @@ dialog.lg p{margin:0}
 </dialog>
 
 <script>
+const APP_V="3";
+(()=>{try{
+  const el=document.getElementById("appV"); if(el) el.textContent=APP_V;
+  fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
+    const m=t.match(/const APP_V="([^"]+)"/); if(!m||m[1]===APP_V) return;
+    const k="stamp_upd_"+m[1]; if(sessionStorage.getItem(k)) return; sessionStorage.setItem(k,"1");
+    location.replace(location.pathname+"?v="+m[1]+location.hash);
+  }).catch(()=>{});
+}catch(e){}})();
 const TH_DAYS=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
 const TH_MON=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 // เวลาคาบ โรงเรียนภูเขียว ภาคเรียนที่ 2/2569

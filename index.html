@@ -37,20 +37,20 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- home ---------- */
-.hero{position:relative;height:min(60vh,540px);min-height:380px;background:#d9d6d0;overflow:hidden;color:#fff}
+.hero{position:relative;height:min(56vh,500px);min-height:340px;background:#d9d6d0;overflow:hidden;color:#fff}
 .hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.5);transition:opacity .5s ease-out}
 /* every saved photo carries the watermark at its top and bottom edges; zoom into the middle so it does not clash with the stats */
 .hero>img.on{opacity:1}
 .hero::before,.hero::after{content:"";position:absolute;left:0;right:0;pointer-events:none;z-index:1}
-.hero::before{top:0;height:120px;background:linear-gradient(rgba(0,0,0,.36),rgba(0,0,0,0))}
+.hero::before{display:none}
 .hero::after{bottom:0;height:240px;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.66))}
 .hero.blank{background:linear-gradient(160deg,#f1efec,#e2dfda)}
 .hero.blank::before,.hero.blank::after{display:none}
-.htop{position:absolute;z-index:2;top:6px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:center}
+.htop{display:flex;justify-content:space-between;align-items:center;height:56px;padding:0 8px;color:var(--fg);background:var(--bg)}
 .htop .wm{font-weight:700;letter-spacing:.32em;padding-left:.32em;font-size:15px}
 .hbtn{width:44px;height:44px;border:0;background:transparent;color:inherit;display:grid;place-items:center;padding:0;border-radius:50%}
 .hbtn .ic{width:22px;height:22px}
-.hero.blank .htop,.hero.blank .hstats,.hero.blank .hcap{color:var(--fg)}
+.hero.blank .hstats,.hero.blank .hcap{color:var(--fg)}
 .hopen{position:absolute;inset:0;z-index:1;border:0;background:transparent;padding:0;cursor:pointer}
 .hcap{position:absolute;z-index:2;left:0;right:0;bottom:104px;text-align:center;font-size:.8rem;opacity:.9;padding:0 20px;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.4)}
 .hstats{position:absolute;z-index:2;left:24px;right:24px;bottom:46px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.35)}
@@ -273,14 +273,14 @@ dialog.lg p{margin:0}
 <div class="app">
   <!-- HOME -->
   <section class="view" id="v-home" aria-label="หน้าหลัก">
-    <div class="hero blank" id="hero">
-      <img id="heroImg" alt="">
-      <button type="button" class="hopen" id="heroOpen" aria-label="เปิดรูปล่าสุดในตารางสรุป" hidden></button>
       <div class="htop">
         <button type="button" class="hbtn" id="hAcct" aria-label="PIN และการซิงก์"><svg class="ic" aria-hidden="true"><use href="#i-user"/></svg></button>
         <span class="wm">STAMP</span>
         <button type="button" class="hbtn" id="hSync" aria-label="สถานะการซิงก์"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></button>
       </div>
+    <div class="hero blank" id="hero">
+      <img id="heroImg" alt="">
+      <button type="button" class="hopen" id="heroOpen" aria-label="เปิดรูปล่าสุดในตารางสรุป" hidden></button>
       <div class="hempty" id="hEmpty"><svg class="ic" aria-hidden="true" style="width:40px;height:40px;stroke-width:1.4"><use href="#i-camera"/></svg><span id="hEmptyT"></span><button type="button" class="out" data-a="login" id="hPin" hidden>ใส่ PIN</button></div>
       <div class="hcap" id="hCap"></div>
       <div class="hstats num">
@@ -752,7 +752,7 @@ const Store={
   async initFb(){
     const M=window.__FBMOCK;
     const [A,Au,F]=M?[M.A,M.Au,M.F]:await Promise.all([import(FBU("app")),import(FBU("auth")),import(FBU("firestore"))]);
-    const app=A.initializeApp(FB_CFG), auth=Au.getAuth(app), db=F.getFirestore(app);
+    const app=A.initializeApp(FB_CFG), auth=Au.getAuth(app); let db; try{db=F.initializeFirestore&&F.persistentLocalCache?F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentSingleTabManager()})}):F.getFirestore(app)}catch(e){db=F.getFirestore(app)}
     this.fb={A,Au,F,auth,db}; this.col=F.collection(db,"photos"); this.mode="fb";
     const u=await new Promise((res,rej)=>{const off=Au.onAuthStateChanged(auth,x=>{off&&off();res(x)},rej)});
     this.user=u||(await Au.signInAnonymously(auth)).user;
@@ -987,19 +987,30 @@ function openDoc(x){
   tsel=(i<5&&x.pi>=0&&x.pi<periods.length)?{t:"cell",k:i+"-"+x.pi}:{t:"doc",id:x.id};
   setView("table"); setTimeout(revealDetail,80);
 }
-let heroDoc=null;
+let heroDoc=null, heroCache=load("wm_hero",null), heroMaking="";
+function cacheHero(x){
+  if(heroMaking===x.id||(heroCache&&heroCache.id===x.id)) return; heroMaking=x.id;
+  const im=new Image(); im.onload=()=>{try{
+    const s=Math.min(1,1000/Math.max(im.naturalWidth,im.naturalHeight)), c=document.createElement("canvas");
+    c.width=Math.round(im.naturalWidth*s); c.height=Math.round(im.naturalHeight*s); c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+    heroCache={id:x.id,cap:$("hCap").textContent,u:c.toDataURL("image/jpeg",.72)}; save("wm_hero",heroCache);
+  }catch(e){}}; im.src=Store.url(x.full);
+}
+const setHeroImg=u=>{const im=$("heroImg"); if(im.dataset.u!==u){im.classList.remove("on");im.dataset.u=u;im.onload=()=>im.classList.add("on");im.src=u}};
 function renderHome(){
-  const now=new Date(), locked=Store.checked&&!Store.ok, sorted=[...docs].sort((a,b)=>b.ts-a.ts), top=sorted[0];
+  const ok0=Store.ok, now=new Date(), locked=Store.checked&&!Store.ok, sorted=[...docs].sort((a,b)=>b.ts-a.ts), top=sorted[0];
   heroDoc=top||null;
   // hero
   const h=$("hero"), im=$("heroImg");
   if(top){
-    const u=Store.url(top.full);
-    if(im.dataset.u!==u){im.classList.remove("on");im.dataset.u=u;im.onload=()=>im.classList.add("on");im.src=u}
+    if(!(heroCache&&heroCache.id===top.id&&im.dataset.u===heroCache.u)) setHeroImg(Store.url(top.full));
     im.alt="รูปล่าสุด "+docLabel(top);
     h.classList.remove("blank"); $("hEmpty").hidden=true; $("heroOpen").hidden=false;
     const d=new Date(top.ts);
     $("hCap").textContent=`ล่าสุด · ${d.getDate()} ${MON_S[d.getMonth()]} · ${pad(d.getHours())}:${pad(d.getMinutes())} น.${top.pi>=0?` · คาบที่ ${top.pi+1}`:""}${top.cls?` · ม.${top.cls}`:""}`;
+    cacheHero(top);
+  }else if(heroCache&&heroCache.u&&!(ok0&&loaded)){
+    setHeroImg(heroCache.u); h.classList.remove("blank"); $("hEmpty").hidden=true; $("heroOpen").hidden=true; $("hCap").textContent=heroCache.cap||"";
   }else{
     h.classList.add("blank"); im.classList.remove("on"); im.removeAttribute("src"); im.dataset.u=""; $("heroOpen").hidden=true; $("hCap").textContent="";
     $("hEmpty").hidden=false; $("hPin").hidden=!locked;

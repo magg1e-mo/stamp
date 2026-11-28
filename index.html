@@ -7,6 +7,7 @@
 <meta name="application-name" content="STAMP">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#ffffff">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -31,8 +32,9 @@ html{scrollbar-width:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;ba
 *{touch-action:pan-x pan-y;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:15px;line-height:1.55;caret-color:var(--accent)}
 ::selection{background:var(--accent);color:var(--accent-fg)}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
-.app{max-width:560px;margin:0 auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(var(--nav) + 20px);min-height:100vh}
+/* solid white strip at the very top: whatever iOS draws behind the status bar is always plain white, never the photo */
+body::before{content:"";position:fixed;inset:0 0 auto;height:calc(env(safe-area-inset-top,0px) + 14px);z-index:30;background:#fff}
+.app{max-width:560px;margin:0 auto;padding-top:calc(env(safe-area-inset-top,0px) + 14px);padding-bottom:calc(var(--nav) + 20px);min-height:100vh}
 .ic{width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .num{font-variant-numeric:tabular-nums}
 
@@ -405,7 +407,7 @@ dialog.lg p{margin:0}
 </dialog>
 
 <script>
-const APP_V="3";
+const APP_V="4";
 (()=>{try{
   const el=document.getElementById("appV"); if(el) el.textContent=APP_V;
   fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.text():"").then(t=>{
